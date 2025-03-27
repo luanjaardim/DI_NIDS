@@ -6,6 +6,7 @@ from utils import get_ds
 import tensorflow as tf
 from keras.layers import Dense, Flatten
 from keras import Model
+from keras.optimizers import Adam
 from utils import get_day_set, get_ds
 
 ##############################################################################
@@ -28,7 +29,8 @@ from utils import get_day_set, get_ds
 
 print("Reading Sample dataset...")
 # X = pd.read_csv("mirai3.csv", "../DI_RePO/cic_dataset/thursday/part_00000.npy").to_numpy() #an m-by-n dataset with m observations
-X, y, train_ds_size = get_ds("./data/")
+X, y, _, _ = get_day_set("monday", root="./data/", num_files=np.inf)
+train_ds_size = X.shape[0]
 
 # KitNET params:
 maxAE = 10 #maximum size for any autoencoder in the ensemble layer
@@ -58,9 +60,9 @@ attack_to_label={
     'Web-Attack':8, 'Infiltration':9, #Thursday attacks
     'Botnet':10,'PortScan':11,'DDoS':12 #Friday attacks
 }
-
+print("com 1000")
 timesteps = 20
-attack_types = ['Hulk','GoldenEye','Heartbleed', 'Web-Attack', 'Infiltration','Botnet','PortScan','DDoS']
+attack_types = ['SSH-Patator','Slowloris','Slowhttptest','Hulk','GoldenEye','Heartbleed', 'Web-Attack', 'Infiltration','Botnet','PortScan','DDoS']
 
 for attack_type in attack_types:
 
@@ -79,7 +81,7 @@ for attack_type in attack_types:
         # score = tf.reduce_min(tf.reshape(score,[5,20]),axis=-1)
         # score = tf.reduce_sum(score)
 
-        return K.process(x) 
+        return K.process(x)
 
     # Crafiting adversarial Examples:
     @tf.function
@@ -106,14 +108,15 @@ for attack_type in attack_types:
 
         with tf.GradientTape() as tape:
             adv_x = get_delayed_splited(x,p_len)
-            adv_x_normalized = (adv_x- train_min)/(train_max - train_min+0.000001)
-            rand_mask = tf.random.uniform(shape=[100,timesteps,num_input])
-            rand_mask = tf.cast((rand_mask>0.75),tf.float32)
-            partial_adv_x_n = adv_x_normalized*rand_mask
-            rec_adv_x_n = model(partial_adv_x_n,training=False)
-            score1_split = tf.reduce_mean(tf.square(rec_adv_x_n - adv_x_normalized),axis=[1,2])
-            score1_split = tf.reduce_sum(score1_split)
-            loss_split = score1_split
+            # adv_x_normalized = (adv_x- train_min)/(train_max - train_min+0.000001)
+            # rand_mask = tf.random.uniform(shape=[100,timesteps,num_input])
+            # rand_mask = tf.cast((rand_mask>0.75),tf.float32)
+            # partial_adv_x_n = adv_x_normalized*rand_mask
+            # rec_adv_x_n = model(partial_adv_x_n,training=False)
+            # score1_split = tf.reduce_mean(tf.square(rec_adv_x_n - adv_x_normalized),axis=[1,2])
+            # score1_split = tf.reduce_sum(score1_split)
+            # loss_split = score1_split
+            loss_split = K.process(adv_x)
 
         gradients = tape.gradient(loss_split, [alpha_delay,alpha_split])
         optimizer.apply_gradients(zip(gradients, [alpha_delay,alpha_split]))
@@ -137,20 +140,22 @@ for attack_type in attack_types:
         
         with tf.GradientTape() as tape:
             adv_x1,adv_x2 = get_injected(x,inject_mask)
-            adv_x1_normalized = (adv_x1- train_min)/(train_max - train_min+0.000001)
-            adv_x2_normalized = (adv_x2- train_min)/(train_max - train_min+0.000001)
-            rand_mask = tf.random.uniform(shape=[100,timesteps,num_input])
-            rand_mask = tf.cast((rand_mask>0.75),tf.float32)
-            partial_adv_x_n1 = adv_x1_normalized*rand_mask
-            rand_mask = tf.random.uniform(shape=[100,timesteps,num_input])
-            rand_mask = tf.cast((rand_mask>0.75),tf.float32)
-            partial_adv_x_n2 = adv_x2_normalized*rand_mask
-            rec_adv_x_n1 = model(partial_adv_x_n1,training=False)
-            rec_adv_x_n2 = model(partial_adv_x_n2,training=False)
-            score1_inject1 = tf.reduce_mean(tf.square(rec_adv_x_n1 - adv_x1_normalized),axis=[1,2])
-            score1_inject1 = tf.reduce_sum(score1_inject1)
-            score1_inject2 = tf.reduce_mean(tf.square(rec_adv_x_n2 - adv_x2_normalized),axis=[1,2])
-            score1_inject2 = tf.reduce_sum(score1_inject2)
+            # adv_x1_normalized = (adv_x1- train_min)/(train_max - train_min+0.000001)
+            # adv_x2_normalized = (adv_x2- train_min)/(train_max - train_min+0.000001)
+            # rand_mask = tf.random.uniform(shape=[100,timesteps,num_input])
+            # rand_mask = tf.cast((rand_mask>0.75),tf.float32)
+            # partial_adv_x_n1 = adv_x1_normalized*rand_mask
+            # rand_mask = tf.random.uniform(shape=[100,timesteps,num_input])
+            # rand_mask = tf.cast((rand_mask>0.75),tf.float32)
+            # partial_adv_x_n2 = adv_x2_normalized*rand_mask
+            # rec_adv_x_n1 = model(partial_adv_x_n1,training=False)
+            # rec_adv_x_n2 = model(partial_adv_x_n2,training=False)
+            # score1_inject1 = tf.reduce_mean(tf.square(rec_adv_x_n1 - adv_x1_normalized),axis=[1,2])
+            # score1_inject1 = tf.reduce_sum(score1_inject1)
+            # score1_inject2 = tf.reduce_mean(tf.square(rec_adv_x_n2 - adv_x2_normalized),axis=[1,2])
+            # score1_inject2 = tf.reduce_sum(score1_inject2)
+            score1_inject1 = K.process(adv_x1)
+            score1_inject2 = K.process(adv_x2)
             loss_inject = score1_inject1 + score1_inject2
 
         gradients = tape.gradient(loss_inject, [alpha_inject])
@@ -235,11 +240,8 @@ for attack_type in attack_types:
         return res
 
 
-
-
-
     # TODO: kitsune model cannot be imported
-    model = tf.keras.models.load_model('../models/pkt_model/')
+    # model = tf.keras.models.load_model('../models/pkt_model/')
 
     if attack_type in ['FTP-Patator','SSH-Patator']:
         day = 'tuesday'
@@ -250,32 +252,28 @@ for attack_type in attack_types:
     else:
         day = 'friday'
 
-    x_test,y_test,train_min,train_max = get_day_set(day)
+    x_test,y_test,train_min,train_max = get_day_set(day, num_files=np.inf, root="./data")
     num_input = x_test.shape[1]
     print(x_test.shape,y_test.shape)
-
 
     alpha_delay = tf.Variable(np.zeros((1, 1,num_input),dtype=np.float32),name='delay')
     alpha_split = tf.Variable(np.zeros((1),dtype=np.float32),name='split')
     alpha_inject = tf.Variable(np.zeros((1, 1,num_input), dtype=np.float32),name='modifier')
 
-    optimizer = tf.keras.optimizers.Adam(learning_rate=0.1)
+    optimizer = Adam(learning_rate=0.1)
 
     attack_label = attack_to_label[attack_type]
     x_test_mal = x_test[y_test==attack_label]
     x_test_mal = np.concatenate((np.zeros((timesteps-1,num_input)),x_test_mal),axis=0)
     print (x_test_mal.shape)
-    x_test_mal = x_test_mal[:2500].astype(np.float32)
+    x_test_mal = x_test_mal[:1000].astype(np.float32)
     score_np = np.zeros(len(x_test_mal))
     st = timesteps-1
     begin_time = time.time()
     for i in range(len(x_test_mal)-timesteps):
-        if i%10000==0:
-            print (i,time.time() - begin_time)
         sample = x_test_mal[i:i+timesteps][None]
         score_temp = test_step(sample)
         score_np[st+i] = score_temp.numpy()
-    print (i,time.time() - begin_time)
 
     mal_scores = score_np[timesteps:]
     print ("TPR in normal setting for "+attack_type+" is {0:0.4f}".format(np.sum(mal_scores>=thr)/len(mal_scores)))
@@ -293,8 +291,6 @@ for attack_type in attack_types:
         stream.append(x_test_mal[i])
         stream_status.append(None)
     for i in range(timesteps-1,len(x_test_mal)):
-        if i%100==0:
-            print ('#',i,(time.time() - begin_time)/60.,cons_as_mal,cons_as_ben,fooled)
         x = np.zeros((1,20,29),dtype=np.float32)
         x[0,:19] = np.array(stream[-19:])
         x[0,19] = x_test_mal[i]
