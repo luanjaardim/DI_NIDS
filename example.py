@@ -26,10 +26,9 @@ print("Reading Sample dataset...")
 import os
 ds = []
 labels = []
-num_files_per_day = 1
+num_files_per_day = np.inf
 monday_ds_size = 0
-# for dir in [ "monday/", "tuesday/", "wednesday/", "thursday/", "friday/" ]:
-for dir in [ "monday/", "tuesday/",  ]:
+for dir in [ "monday/", "tuesday/", "wednesday/", "thursday/", "friday/" ]:
     path = f"./data/{dir}"
     files = os.listdir(path)
     files.sort()
