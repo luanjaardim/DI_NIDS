@@ -19,19 +19,14 @@ def get_day_set(day, num_files = np.inf, root=''):
                 break
             i += 1
             m = np.load(path+f)
-            m = m.astype(np.float32)
-            m_min = np.min(m,axis=0)
-            ds_min = ds_min if ds_min < m_min else m_min
-            m_max = np.max(m,axis=0)
-            ds_max = ds_max if ds_max < m_max else m_max
             ds.append(m)
-
     ds = np.concatenate(ds)
-    ds_normalized = (ds - ds_min)/(ds_max - ds_min+0.000001)
+    ds_min = np.min(ds,axis=0)
+    ds_max = np.max(ds,axis=0)
     if day != "monday":
         labels = np.load(path+"labels.npy")[:ds.shape[0]]
 
-    return ds_normalized, labels, ds_min, ds_max
+    return ds, labels, ds_min, ds_max
 
 def get_ds(root_dir, num_files=np.inf):
     import numpy as np
@@ -47,8 +42,11 @@ def get_ds(root_dir, num_files=np.inf):
         ds.append(x)
 
     X = np.concatenate(ds, axis=0)
+    X_min = np.min(X, axis=0)
+    X_max = np.max(X, axis=0)
+    X_normalized = (X - X_min)/(X_max - X_min+0.000001)
     y = np.concatenate(y, axis=0)
-    return X, y, monday_ds_size
+    return X_normalized, y, monday_ds_size
 
 def pdf(x,mu,sigma): #normal distribution pdf
     x = (x-mu)/sigma
