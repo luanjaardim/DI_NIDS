@@ -46,19 +46,16 @@ for i in range(X.shape[0]):
 stop = time.time()
 print("Complete. Time elapsed: "+ str(stop - start))
 
-print(len(y))
-print(len(RMSEs[FMgrace+ADgrace:]))
 real_labels = y!=-1
 all_scores = RMSEs[FMgrace+ADgrace:][real_labels]
 all_labels = y[real_labels]
-
 
 fpr = 0.01
 benign_scores_sorted = np.sort(all_scores[all_labels==0])
 thr_ind = benign_scores_sorted.shape[0]*fpr
 thr_ind = int(np.round(thr_ind))
 thr = benign_scores_sorted[-thr_ind]
-print(thr)
+print("Threshold: ", thr)
 
 label_names = ['Benign','FTP-Patator','SSH-Patator','Slowloris','Slowhttptest','Hulk','GoldenEye','Heartbleed', 'Web-Attack', 'Infiltration','Botnet','PortScan','DDoS']
 

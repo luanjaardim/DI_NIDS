@@ -1,40 +1,53 @@
-
+import os
 import numpy
+import numpy as np
 from scipy.stats import norm
 numpy.seterr(all='ignore')
 
-def get_ds(root_dir):
-    import os
+def get_day_set(day, num_files = np.inf, root=''):
+    path = f"{root}/{day}/"
+    files = os.listdir(path)
+    files.sort()
+    ds_min = np.inf
+    ds_max = -np.inf
+    i = 0
+    labels = None
+    ds = []
+    for f in files:
+        if "part" in f:
+            if i == num_files:
+                break
+            i += 1
+            m = np.load(path+f)
+            m = m.astype(np.float32)
+            m_min = np.min(m,axis=0)
+            ds_min = ds_min if ds_min < m_min else m_min
+            m_max = np.max(m,axis=0)
+            ds_max = ds_max if ds_max < m_max else m_max
+            ds.append(m)
+
+    ds = np.concatenate(ds)
+    ds_normalized = (ds - ds_min)/(ds_max - ds_min+0.000001)
+    if day != "monday":
+        labels = np.load(path+"labels.npy")[:ds.shape[0]]
+
+    return ds_normalized, labels, ds_min, ds_max
+
+def get_ds(root_dir, num_files=np.inf):
     import numpy as np
     ds = []
-    labels = []
-    num_files_per_day = np.inf
+    y = []
     monday_ds_size = 0
-    for dir in [ "monday/", "tuesday/", "wednesday/", "thursday/", "friday/" ]:
-        path = f"./{root_dir}/{dir}"
-        files = os.listdir(path)
-        files.sort()
-        cur_day_len = 0
-        i = 0
-        for f in files:
-            if "part" in f:
-                if i == num_files_per_day:
-                    break
-                i += 1
-                m = np.load(path+f)
-                m = m.astype(np.float32)
-                m_min = np.min(m,axis=0)
-                m_max = np.max(m,axis=0)
-                m_normalized = (m - m_min)/(m_max - m_min+0.000001)
-                cur_day_len += len(m)
-                ds.append(m_normalized)
-        if dir != "monday/":
-            labels.append(np.load(path+"labels.npy")[:cur_day_len])
+    for day in [ "monday", "tuesday", "wednesday", "thursday", "friday" ]:
+        x, labels, _, _ = get_day_set(day, num_files=num_files, root=root_dir)
+        if day != "monday":
+            y.append(labels)
         else:
-            monday_ds_size = cur_day_len
+            monday_ds_size = x.shape[0]
+        ds.append(x)
 
     X = np.concatenate(ds, axis=0)
-    y = np.concatenate(labels, axis=0)
+    y = np.concatenate(y, axis=0)
     return X, y, monday_ds_size
 
 def pdf(x,mu,sigma): #normal distribution pdf
