@@ -2,6 +2,7 @@ import KitNET as kit
 import numpy as np
 import pandas as pd
 import time
+from utils import get_ds
 
 ##############################################################################
 # KitNET is a lightweight online anomaly detection algorithm based on an ensemble of autoencoders.
@@ -23,41 +24,12 @@ import time
 
 print("Reading Sample dataset...")
 # X = pd.read_csv("mirai3.csv", "../DI_RePO/cic_dataset/thursday/part_00000.npy").to_numpy() #an m-by-n dataset with m observations
-import os
-ds = []
-labels = []
-num_files_per_day = np.inf
-monday_ds_size = 0
-for dir in [ "monday/", "tuesday/", "wednesday/", "thursday/", "friday/" ]:
-    path = f"./data/{dir}"
-    files = os.listdir(path)
-    files.sort()
-    cur_day_len = 0
-    i = 0
-    for f in files:
-        if "part" in f:
-            if i == num_files_per_day:
-                break
-            i += 1
-            m = np.load(path+f)
-            m = m.astype(np.float32)
-            m_min = np.min(m,axis=0)
-            m_max = np.max(m,axis=0)
-            m_normalized = (m - m_min)/(m_max - m_min+0.000001)
-            cur_day_len += len(m)
-            ds.append(m_normalized)
-    if dir != "monday/":
-        labels.append(np.load(path+"labels.npy")[:cur_day_len])
-    else:
-        monday_ds_size = cur_day_len
-
-X = np.concatenate(ds, axis=0)
-y = np.concatenate(labels, axis=0)
+X, y, train_ds_size = get_ds("./data/")
 
 # KitNET params:
 maxAE = 10 #maximum size for any autoencoder in the ensemble layer
-FMgrace = monday_ds_size // 10 #the number of instances taken to learn the feature mapping (the ensemble's architecture)
-ADgrace = monday_ds_size - FMgrace #the number of instances used to train the anomaly detector (ensemble itself)
+FMgrace = train_ds_size // 10 #the number of instances taken to learn the feature mapping (the ensemble's architecture)
+ADgrace = train_ds_size - FMgrace #the number of instances used to train the anomaly detector (ensemble itself)
 
 # Build KitNET
 K = kit.KitNET(X.shape[1],maxAE,FMgrace,ADgrace)

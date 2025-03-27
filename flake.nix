@@ -26,8 +26,7 @@
         py.scapy
         py.scipy
         py.cython
-
-        # py.distutils
+        py.tensorflow
         py.scikit-learn
 
         # Any other package that my be needed in the shell can be added here too

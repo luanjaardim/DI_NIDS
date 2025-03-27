@@ -3,6 +3,40 @@ import numpy
 from scipy.stats import norm
 numpy.seterr(all='ignore')
 
+def get_ds(root_dir):
+    import os
+    import numpy as np
+    ds = []
+    labels = []
+    num_files_per_day = np.inf
+    monday_ds_size = 0
+    for dir in [ "monday/", "tuesday/", "wednesday/", "thursday/", "friday/" ]:
+        path = f"./{root_dir}/{dir}"
+        files = os.listdir(path)
+        files.sort()
+        cur_day_len = 0
+        i = 0
+        for f in files:
+            if "part" in f:
+                if i == num_files_per_day:
+                    break
+                i += 1
+                m = np.load(path+f)
+                m = m.astype(np.float32)
+                m_min = np.min(m,axis=0)
+                m_max = np.max(m,axis=0)
+                m_normalized = (m - m_min)/(m_max - m_min+0.000001)
+                cur_day_len += len(m)
+                ds.append(m_normalized)
+        if dir != "monday/":
+            labels.append(np.load(path+"labels.npy")[:cur_day_len])
+        else:
+            monday_ds_size = cur_day_len
+
+    X = np.concatenate(ds, axis=0)
+    y = np.concatenate(labels, axis=0)
+    return X, y, monday_ds_size
+
 def pdf(x,mu,sigma): #normal distribution pdf
     x = (x-mu)/sigma
     return numpy.exp(-x**2/2)/(numpy.sqrt(2*numpy.pi)*sigma)
