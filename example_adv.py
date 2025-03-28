@@ -66,7 +66,6 @@ attack_types = ['SSH-Patator','Slowloris','Slowhttptest','Hulk','GoldenEye','Hea
 
 for attack_type in attack_types:
 
-    @tf.function
     def test_step(x):
         # NOTE: removing aplication of partial visualization
         #
@@ -81,7 +80,7 @@ for attack_type in attack_types:
         # score = tf.reduce_min(tf.reshape(score,[5,20]),axis=-1)
         # score = tf.reduce_sum(score)
 
-        return K.process(x)
+        return [ K.process(sample) for sample in x ]
 
     # Crafiting adversarial Examples:
     @tf.function
@@ -271,9 +270,9 @@ for attack_type in attack_types:
     st = timesteps-1
     begin_time = time.time()
     for i in range(len(x_test_mal)-timesteps):
-        sample = x_test_mal[i:i+timesteps][None]
-        score_temp = test_step(sample)
-        score_np[st+i] = score_temp.numpy()
+        samples = x_test_mal[i:i+timesteps]
+        score_temp = test_step(samples)
+        score_np[st+i] = np.mean(score_temp)
 
     mal_scores = score_np[timesteps:]
     print ("TPR in normal setting for "+attack_type+" is {0:0.4f}".format(np.sum(mal_scores>=thr)/len(mal_scores)))
@@ -291,9 +290,9 @@ for attack_type in attack_types:
         stream.append(x_test_mal[i])
         stream_status.append(None)
     for i in range(timesteps-1,len(x_test_mal)):
-        x = np.zeros((1,20,29),dtype=np.float32)
-        x[0,:19] = np.array(stream[-19:])
-        x[0,19] = x_test_mal[i]
+        x = np.zeros((20,29),dtype=np.float32)
+        x[:19] = np.array(stream[-19:])
+        x[19] = x_test_mal[i]
         temp = find_adv(np.copy(x))
         stream_status.append(temp)
         if isinstance(temp,type(None)):
