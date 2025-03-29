@@ -163,8 +163,7 @@ for attack_type in attack_types:
 
     def find_adv(x):
 
-        sc = test_step(x)
-        sc = sc.numpy()
+        sc = np.array(test_step(x))
         if sc<thr:
             return 'cons_as_ben'
         if x[0,-1,-1]==2: #packet is sent from victim
@@ -185,8 +184,7 @@ for attack_type in attack_types:
         ip_len_last = x[0,-1,3]
         adv_x = get_delayed_splited(x,len_last)
         adv_x = adv_x.numpy()
-        sc = test_step(adv_x)
-        sc = sc.numpy()
+        sc = np.array(test_step(adv_x))
         if sc<thr:
             return [adv_x]
         res = []
@@ -195,8 +193,7 @@ for attack_type in attack_types:
             adv_x = get_delayed_splited(x,len_last)
             adv_x = adv_x.numpy()
             adv_x[0,-1,1:4] = np.round(adv_x[0,-1,1:4])
-            sc = test_step(adv_x)
-            sc = sc.numpy()
+            sc = np.array(test_step(adv_x))
             if sc<thr:
                 first_part = np.copy(adv_x)
                 diff = len_last - adv_x[0,-1,1]
@@ -227,11 +224,9 @@ for attack_type in attack_types:
             adv_x1,adv_x2 = get_injected(x,cur_mask)
             adv_x1,adv_x2  = adv_x1.numpy(),adv_x2.numpy()
             adv_x1[0,:,1:] = np.round(adv_x1[0,:,1:])
-            sc = test_step(adv_x1)
-            sc = sc.numpy()
+            sc = np.array(test_step(adv_x1))
             adv_x2[0,:,1:] = np.round(adv_x2[0,:,1:])
-            sc2 = test_step(adv_x2)
-            sc2 = sc2.numpy()
+            sc2 = np.array(test_step(adv_x2))
             if sc<thr and sc2<thr: #fooled
                 fake_packets.append(adv_x1[0,-1])
                 return ('inject',adv_x1[0,-1]) #<--- the packet which is inject should be returned
